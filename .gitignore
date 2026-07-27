@@ -1,0 +1,16 @@
+# Skill sync / backup artifacts
+.skills-backup-*/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.vscode/settings.json
+.DS_Store
+Thumbs.db
