@@ -42,7 +42,9 @@ your existing instructions file.
 3. **Re-check the house rules.** Rules 1–7 in `copilot-instructions.md` encode opinions about
    declarative config, untrusted callers, and credential handling. Keep the ones that fit your
    project; delete the ones that do not rather than leaving a rule your code violates.
-4. **Run a sync pass.** `metadata.last-reviewed` on every skill reads `2026-07-28`. See
+4. **Wire up an MCP server or two** — see [MCP servers that help](#mcp-servers-that-help).
+   The Learn MCP is free, needs no auth, and is what the sync procedure prefers.
+5. **Run a sync pass.** `metadata.last-reviewed` on every skill reads `2026-07-28`. See
    [Keeping skills truthful](#keeping-skills-truthful).
 
 ## What's in the pack
@@ -95,6 +97,51 @@ samples. Never resolve a conflict by preference.
 `skill-pack-audit` covers the other half — whether a claim sits in the right place, exactly
 once. Run it after adding a skill, or when the agent starts loading the wrong one.
 
+## MCP servers that help
+
+Skills tell the agent *what is true*; MCP servers let it *check*. The two are complementary —
+a sync pass that can query Learn directly is far cheaper and more accurate than one scraping
+doc pages, and an agent that can list your actual Foundry deployments stops inventing model
+names.
+
+### Dev-time — servers your **coding agent** uses
+
+| Server | Type | Endpoint / install | Why it helps here |
+|---|---|---|---|
+| [Microsoft Learn](https://github.com/MicrosoftDocs/mcp) | remote | `https://learn.microsoft.com/api/mcp` | **Start here.** Free, no auth. `microsoft_docs_search`, `microsoft_docs_fetch`, `microsoft_code_sample_search` against official docs. The [skill-sync procedure](.github/skills/maf-dev-loop/references/skill-sync.md) prefers it over `fetch_webpage` |
+| [Microsoft Foundry](https://learn.microsoft.com/azure/ai-foundry/mcp/get-started) | remote | `https://mcp.ai.azure.com` | Models, knowledge, and evaluation tools against your real project — grounds `maf-foundry-agent` and `foundry-iq` work in deployments that actually exist |
+| [Azure MCP Server](https://learn.microsoft.com/azure/developer/azure-mcp-server/) | local | VS Code extension `ms-azuretools.vscode-azure-mcp-server` | Azure AI Search, RBAC, Monitor, and Key Vault tools — covers knowledge-base setup, the role assignments in `foundry-iq/references/setup.md`, and App Insights queries from `maf-dev-loop` |
+| [GitHub](https://github.com/github/github-mcp-server) | remote | `https://api.githubcopilot.com/mcp` | Reads `microsoft/agent-framework` samples and SDK changelogs at `main`, which is often ahead of the released package |
+
+VS Code reads `.vscode/mcp.json`. The template does not ship one — add what you need:
+
+```jsonc
+{
+  "servers": {
+    "microsoft-learn": { "type": "http", "url": "https://learn.microsoft.com/api/mcp" },
+    "microsoft-foundry": { "type": "http", "url": "https://mcp.ai.azure.com" }
+  }
+}
+```
+
+The full first-party catalog is at [microsoft/mcp](https://github.com/microsoft/mcp).
+
+### Runtime — servers your **agent** calls
+
+Different concern, same protocol. The pack covers this too:
+
+- **From a MAF agent** — `get_mcp_tool()` on `FoundryChatClient`, plus `approval_mode`
+  semantics: [maf-foundry-agent/references/tools-and-skills.md](.github/skills/maf-foundry-agent/references/tools-and-skills.md)
+- **From VoiceLive directly** — the speech loop can call a remote MCP server without a round
+  trip through your process; `MCPApprovalType` controls consent:
+  [voicelive-realtime](.github/skills/voicelive-realtime/SKILL.md)
+- **A knowledge base as an MCP server** — `AZURE_SEARCH_MCP_ENDPOINT` exposes
+  `knowledge_base_retrieve`: [foundry-iq/references/wiring.md](.github/skills/foundry-iq/references/wiring.md)
+
+> **Trust boundary.** A remote MCP server is third-party code deciding what your agent sees.
+> Never auto-approve tools from a server you do not control, and treat every tool result as
+> untrusted data — never as instructions. That is house rule 2 applied to tools.
+
 ## Sources & references
 
 Every claim in the pack traces back to one of the artifacts below. Skills state facts; they do
@@ -138,7 +185,6 @@ The installed package is the strongest signal for "does this symbol exist". Rele
 
 - [Foundry docs](https://learn.microsoft.com/azure/ai-foundry/)
 - [`azure-ai-projects` changelog](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/ai/azure-ai-projects/CHANGELOG.md)
-- [MCP specification](https://modelcontextprotocol.io/specification)
 
 ### Foundry IQ & Azure AI Search
 
@@ -162,8 +208,13 @@ The installed package is the strongest signal for "does this symbol exist". Rele
   — ground truth for `skill-pack-audit`
 - [Mermaid Chart VS Code extension](https://marketplace.visualstudio.com/items?itemName=MermaidChart.vscode-mermaid-chart)
   — ground truth for `mermaid-diagrams`
-- [Microsoft Learn MCP endpoint](https://learn.microsoft.com/api/mcp) — optional, for
-  `.vscode/mcp.json`; preferred over direct fetch during a sync pass
+
+### MCP
+
+- [Model Context Protocol specification](https://modelcontextprotocol.io/specification)
+- [Microsoft Learn MCP Server overview](https://learn.microsoft.com/training/support/mcp) ·
+  [repo](https://github.com/MicrosoftDocs/mcp)
+- [microsoft/mcp](https://github.com/microsoft/mcp) — catalog of first-party servers
 
 ## License
 
