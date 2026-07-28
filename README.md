@@ -1,11 +1,49 @@
 # agent-framework-skills
 
-A reusable skill pack for building **Microsoft Agent Framework (MAF)** agents — with a
-Foundry-native voice agent (MAF + Azure AI VoiceLive) as the worked example.
+A **template repository** and reusable skill pack for building **Microsoft Agent Framework
+(MAF)** agents — with a Foundry-native voice agent (MAF + Azure AI VoiceLive) as the worked
+example.
 
 These are [agent skills](https://code.visualstudio.com/docs/copilot/customization/custom-instructions):
-progressively-disclosed domain knowledge that a coding agent loads on demand. Drop them into a
-repo and your agent stops guessing at API surfaces, config contracts, and GA requirements.
+progressively-disclosed domain knowledge that a coding agent loads on demand. Generate a repo
+from this template, or drop the skills into an existing one, and your agent stops guessing at
+API surfaces, config contracts, and GA requirements.
+
+## Use this template
+
+**Generate a new repository** — click **Use this template** on GitHub, or:
+
+```powershell
+gh repo create <your-org>/<your-repo> --template JinLee794/agent-framework-skills --private --clone
+```
+
+You get `.github/skills/` and `.github/copilot-instructions.md` ready to go. Add your `src/`,
+`config/`, and `tests/` on top — `maf-voice-agent/references/repo-layout.md` describes the
+layout the skills assume.
+
+**Or vendor into an existing repo** — the skills are independent and can be adopted one at a
+time:
+
+```powershell
+git clone https://github.com/JinLee794/agent-framework-skills.git
+Copy-Item agent-framework-skills\.github\skills\* .github\skills\ -Recurse
+```
+
+In VS Code, skills under `.github/skills/` are discovered automatically.
+`.github/copilot-instructions.md` is the single routing surface — it maps tasks to skills and
+carries the house rules that apply everywhere. Copy it too, or merge its routing table into
+your existing instructions file.
+
+### After you generate
+
+1. **Set the routing table.** `.github/copilot-instructions.md` lists every skill in the pack.
+   Delete rows for skills you removed; add rows for skills you add. No skill restates it.
+2. **Rewrite `metadata.author`** in each `SKILL.md` frontmatter — it ships as `MAFVoiceSeed`.
+3. **Re-check the house rules.** Rules 1–7 in `copilot-instructions.md` encode opinions about
+   declarative config, untrusted callers, and credential handling. Keep the ones that fit your
+   project; delete the ones that do not rather than leaving a rule your code violates.
+4. **Run a sync pass.** `metadata.last-reviewed` on every skill reads `2026-07-28`. See
+   [Keeping skills truthful](#keeping-skills-truthful).
 
 ## What's in the pack
 
@@ -21,23 +59,21 @@ repo and your agent stops guessing at API surfaces, config contracts, and GA req
 | `skill-pack-audit` | Reviewing a skill pack for duplication, routing drift, and context cost |
 
 Each skill is a `SKILL.md` (the always-relevant contract) plus a `references/` folder loaded
-only when a task actually needs that depth. `.github/copilot-instructions.md` is the single
-routing surface — it maps tasks to skills and carries the house rules that apply everywhere.
+only when a task actually needs that depth.
 
-## Install
-
-Copy the skills into the consuming repository:
-
-```powershell
-git clone https://github.com/JinLee794/agent-framework-skills.git
-Copy-Item agent-framework-skills\.github\skills\* .github\skills\ -Recurse
+```text
+.github/
+├─ copilot-instructions.md          # routing table + house rules (always on)
+└─ skills/
+   ├─ maf-voice-agent/              # SKILL.md + conformance, env-contract, repo-layout
+   ├─ maf-agent-config/             # SKILL.md + agent-yaml, voice-yaml
+   ├─ voicelive-realtime/           # SKILL.md + session-config, voices-and-avatars
+   ├─ maf-foundry-agent/            # SKILL.md + tools-and-skills, memory-and-context, retrieval
+   ├─ foundry-iq/                   # SKILL.md + knowledge-sources, setup, wiring
+   ├─ maf-dev-loop/                 # SKILL.md + observability, skill-sync, sources
+   ├─ mermaid-diagrams/             # SKILL.md
+   └─ skill-pack-audit/             # SKILL.md
 ```
-
-Or vendor a subset — the skills are independent and can be adopted one at a time.
-
-Then point your agent at them. In VS Code, skills under `.github/skills/` are discovered
-automatically; `.github/copilot-instructions.md` here shows how to advertise the routing table
-so the agent picks the right one.
 
 ## The two rules the pack enforces
 
@@ -58,6 +94,76 @@ samples. Never resolve a conflict by preference.
 
 `skill-pack-audit` covers the other half — whether a claim sits in the right place, exactly
 once. Run it after adding a skill, or when the agent starts loading the wrong one.
+
+## Sources & references
+
+Every claim in the pack traces back to one of the artifacts below. Skills state facts; they do
+not carry URLs — **`.github/skills/maf-dev-loop/references/sources.md` is the maintained
+registry**, and the sync procedure reads it. The list here mirrors it for browsing; if the two
+ever disagree, `sources.md` wins.
+
+### Package pins — check these before any doc fetch
+
+The installed package is the strongest signal for "does this symbol exist". Release pages at
+`https://pypi.org/project/<package>/` carry the authoritative version and date.
+
+| Package | Owns |
+|---|---|
+| `agent-framework`, `agent-framework-foundry` | agents, clients, providers, middleware, skills |
+| `agent-framework-azure-ai-search` | `AzureAISearchContextProvider` |
+| `azure-ai-voicelive` | realtime speech-to-speech |
+| `azure-ai-projects` | Foundry projects, memory stores, vector stores |
+| `azure-search-documents` | index + query APIs, API versions |
+| `azure-monitor-opentelemetry` | App Insights exporter |
+
+### Microsoft Agent Framework
+
+- [Agent Framework docs](https://learn.microsoft.com/agent-framework/)
+- [`microsoft/agent-framework` repo](https://github.com/microsoft/agent-framework)
+- [Python samples](https://github.com/microsoft/agent-framework/tree/main/python/samples)
+- [DevUI docs](https://learn.microsoft.com/agent-framework/devui/) ·
+  [DevUI package README](https://github.com/microsoft/agent-framework/tree/main/python/packages/devui) ·
+  [DevUI samples](https://github.com/microsoft/agent-framework/tree/main/python/samples/02-agents/devui)
+
+### Azure AI VoiceLive
+
+- [Voice Live overview](https://learn.microsoft.com/azure/ai-services/speech-service/voice-live)
+- [Voice Live how-to](https://learn.microsoft.com/azure/ai-services/speech-service/voice-live-how-to)
+- [`azure-ai-voicelive` changelog](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/ai/azure-ai-voicelive/CHANGELOG.md)
+  — highest signal for API version, `RequestSession` fields, VAD class names
+- [SDK README + samples](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/ai/azure-ai-voicelive)
+- [API reference](https://learn.microsoft.com/python/api/overview/azure/ai-voicelive-readme)
+
+### Microsoft Foundry
+
+- [Foundry docs](https://learn.microsoft.com/azure/ai-foundry/)
+- [`azure-ai-projects` changelog](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/ai/azure-ai-projects/CHANGELOG.md)
+- [MCP specification](https://modelcontextprotocol.io/specification)
+
+### Foundry IQ & Azure AI Search
+
+- [What is Foundry IQ](https://learn.microsoft.com/azure/foundry/agents/concepts/what-is-foundry-iq)
+- [Connect a knowledge base to an agent](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
+- [Knowledge source overview](https://learn.microsoft.com/azure/search/agentic-knowledge-source-overview) ·
+  [blob knowledge source how-to](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-blob)
+- [Create a knowledge base](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base) ·
+  [retrieve](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve)
+- [Azure AI Search docs](https://learn.microsoft.com/azure/search/) ·
+  [`azure-search-documents` changelog](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/CHANGELOG.md)
+
+### Observability
+
+- [Azure Monitor OpenTelemetry enablement](https://learn.microsoft.com/azure/azure-monitor/app/opentelemetry-enable)
+- [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/)
+
+### Tooling skills
+
+- [VS Code custom instructions & skills](https://code.visualstudio.com/docs/copilot/customization/custom-instructions)
+  — ground truth for `skill-pack-audit`
+- [Mermaid Chart VS Code extension](https://marketplace.visualstudio.com/items?itemName=MermaidChart.vscode-mermaid-chart)
+  — ground truth for `mermaid-diagrams`
+- [Microsoft Learn MCP endpoint](https://learn.microsoft.com/api/mcp) — optional, for
+  `.vscode/mcp.json`; preferred over direct fetch during a sync pass
 
 ## License
 
