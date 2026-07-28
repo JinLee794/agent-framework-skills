@@ -48,7 +48,7 @@ Three entry shapes, discriminated by which key is present.
 | `enabled` | no | Defaults `true`. Use with an overlay to disable a tool per environment |
 
 The loader resolves `ref` through an explicit registry, never `importlib` on arbitrary
-strings from config. See [loader.md](loader.md).
+strings from config. See the Loading section of [the parent SKILL.md](../SKILL.md).
 
 ### `hosted` — a service-side Foundry tool
 
@@ -127,6 +127,25 @@ by the agent module. Leaking `AzureAISearchContextProvider` leaks connections.
 
 `filter` on `azure_ai_search` is security trimming and must be a `{{ runtime.* }}` value
 derived from the authenticated identity — never a literal, never user input.
+
+### Agentic mode (Foundry IQ knowledge base)
+
+```yaml
+  - type: azure_ai_search
+    source_id: product_docs
+    endpoint: ${AZURE_SEARCH_ENDPOINT}
+    mode: agentic
+    knowledge_base_name: ${AZURE_SEARCH_KNOWLEDGE_BASE_NAME}
+    top_k: 3
+    retrieval_reasoning_effort: minimal   # low/medium need the preview SDK
+    filter: "{{ runtime.security_filter }}"
+```
+
+Set **exactly one** of `knowledge_base_name` or `index_name` — both is an error. `index_name`
+in agentic mode auto-creates a knowledge base named `<index_name>-kb` and then also requires
+`azure_openai_resource_url` and `model`; prefer provisioning the base in `infra/` and naming it
+here. Use `minimal` effort in a voice turn path. The knowledge base itself — its sources,
+instructions, and indexing — is [foundry-iq](../../foundry-iq/SKILL.md), not this file.
 
 ## `skills`
 

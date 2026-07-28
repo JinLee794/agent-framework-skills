@@ -87,7 +87,7 @@ limited-access — confirm eligibility before a profile depends on one.
 ```yaml
 audio:
   input_format: pcm16          # pcm16 | g711_ulaw | g711_alaw
-  output_format: pcm16         # + pcm16_8000hz | pcm16_16000hz
+  output_format: pcm16         # spellings owned by voicelive-realtime
   echo_cancellation: true
   noise_reduction: true
   transcription:
@@ -102,8 +102,8 @@ audio:
 | `noise_reduction: true` | `input_audio_noise_reduction=AudioNoiseReduction()` |
 | `transcription.model` | `input_audio_transcription=AudioInputTranscriptionOptions(model=...)` |
 
-**Underscores, always.** `pcm16_16000hz`. The hyphenated legacy spelling still deserializes
-but must never be written; the loader rejects it with a pointer to this table.
+Audio format spellings are owned by `voicelive-realtime` — the loader validates YAML values
+against that enum list and rejects anything else with a pointer to this table.
 
 `echo_cancellation` must be `true` whenever capture and playback share a device, or the
 agent interrupts itself.

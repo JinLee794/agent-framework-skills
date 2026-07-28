@@ -5,8 +5,9 @@ license: MIT
 compatibility: Python 3.9+; azure-ai-voicelive[aiohttp]>=1.2.0; async-only; api-version 2026-04-10.
 metadata:
   author: MAFVoiceSeed
-  version: "2.0.0"
-  verified-against: "azure-ai-voicelive 1.2.0 GA changelog + samples"
+  version: "2.1.0"
+  last-reviewed: "2026-07-28"
+  verified-against: "azure-ai-voicelive 1.2.0 (GA, api-version 2026-04-10) changelog + samples"
 ---
 
 # VoiceLive Realtime — GA Patterns
@@ -61,39 +62,12 @@ definition is authoritative and the extra payload is misleading.
 
 ## Session configuration
 
-In this repo, session shape is **not** hand-written — it is loaded from
-`config/voice/<name>.voice.yaml` and built by `src/<package>/config/builders.py`. See
-[maf-agent-config](../maf-agent-config/SKILL.md). The Python below is what the builder
-produces, and is the reference for what each YAML key means.
+Session shape is **not** hand-written here — it is loaded from
+`config/voice/<name>.voice.yaml` and built by `src/<package>/config/builders.py`. The full
+`RequestSession` field map, model-selection table, and a worked construction example are in
+[references/session-config.md](references/session-config.md).
 
-```python
-from azure.ai.voicelive.models import (
-    AudioEchoCancellation,
-    AudioInputTranscriptionOptions,
-    AudioNoiseReduction,
-    AzureStandardVoice,
-    InputAudioFormat,
-    Modality,
-    OutputAudioFormat,
-    RequestSession,
-    ServerVad,
-)
-
-session = RequestSession(
-    modalities=[Modality.TEXT, Modality.AUDIO],
-    instructions="You are a concise, friendly phone concierge.",
-    voice=AzureStandardVoice(name="en-US-AvaNeural", type="azure-standard"),
-    input_audio_format=InputAudioFormat.PCM16,
-    output_audio_format=OutputAudioFormat.PCM16,
-    input_audio_echo_cancellation=AudioEchoCancellation(),
-    input_audio_noise_reduction=AudioNoiseReduction(),
-    input_audio_transcription=AudioInputTranscriptionOptions(model="whisper-1"),
-    turn_detection=ServerVad(threshold=0.5, prefix_padding_ms=300, silence_duration_ms=500),
-)
-await connection.session.update(session=session)
-```
-
-Rules:
+Three traps that are not obvious from the field map:
 
 - `OutputAudioFormat` values use underscores: `pcm16_8000hz`, `pcm16_16000hz`. Hyphenated
   legacy values still deserialize but must never be written.
@@ -232,32 +206,21 @@ it costs an extra model call, so prefer static text for high-volume telephony.
 
 ## MCP tools
 
-VoiceLive can call remote MCP servers directly. Approval flow is controlled by
-`MCPApprovalType` (`never`, `always`, or per-tool). Use `always` for anything with side
-effects and handle the approval-request server events by sending an approval response.
-Never auto-approve tools from a server you do not control.
+VoiceLive can call remote MCP servers directly. Approval is controlled by `MCPApprovalType`
+(`never`, `always`, per-tool). Use `always` for anything with side effects, and never
+auto-approve a server you do not control. Details:
+[references/voices-and-avatars.md](references/voices-and-avatars.md).
 
-## Voices
+## Voices and avatars
 
-- Azure neural: `AzureStandardVoice(name="en-US-AvaNeural", type="azure-standard")`.
-  Also `en-US-JennyNeural`, `en-US-GuyNeural`.
-- OpenAI: pass the name as a string — `alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer`,
-  and (added in `1.2.0b2`) `marin`, `cedar`. The enum is `OpenAIVoiceName` (renamed from `OAIVoice`).
-- Custom/personal: `AzurePersonalVoice` supports `custom_lexicon_url`, `prefer_locales`,
-  `locale`, `style`, `pitch`, `rate`, `volume`. Custom voice and custom avatar are
-  limited-access features — confirm eligibility before designing around them.
+Voice choice constrains model choice: native-audio models (`gpt-realtime`,
+`gpt-realtime-mini`, `azure-realtime`) give the lowest latency but only OpenAI voices; Azure
+neural and custom voices route through Azure STT/TTS, which costs latency. Custom voice and
+custom avatar are limited-access features.
 
-Native-audio models (`gpt-realtime`, `gpt-realtime-mini`, `azure-realtime`) give the lowest
-latency. Text models (`gpt-5.x`, `gpt-4.1`) route through Azure STT/TTS, which is what
-enables Azure neural and custom voices.
-
-## Avatars
-
-`AvatarConfig` renamed its `type` field to `avatar_type` in `1.2.0` to avoid shadowing the
-builtin. Supported kinds are `video-avatar` and `photo-avatar` (`AvatarConfigTypes`), with
-`AvatarOutputProtocol` of `webrtc` or `websocket`. Use `Scene` for zoom/position/rotation.
-Drive UI state from `ServerEventSessionAvatarSwitchToSpeaking` /
-`...SwitchToIdle` and render frames from `ServerEventResponseVideoDelta`.
+Full voice catalogue, `AzurePersonalVoice` options, the `AvatarConfig.avatar_type` rename in
+`1.2.0`, and the avatar event contract:
+[references/voices-and-avatars.md](references/voices-and-avatars.md).
 
 ## Tracing
 
@@ -269,13 +232,14 @@ from azure.ai.voicelive.telemetry import VoiceLiveInstrumentor
 VoiceLiveInstrumentor().instrument()
 ```
 
-Emits `gen_ai.voice.*` attributes including `session_id`, `first_token_latency_ms`,
-`turn_count`, `interruption_count`, `audio_bytes_sent`/`received`. Configure the exporter
-*before* calling `instrument()` — it reuses whatever tracer provider is registered. Exporter
-wiring, the full attribute catalogue, and correlating these spans with `invoke_agent` spans:
-[maf-dev-loop](../maf-dev-loop/SKILL.md).
+Configure the exporter *before* calling `instrument()` — it reuses whatever tracer provider is
+registered. Emitted `gen_ai.voice.*` attributes, exporter wiring, and correlating these spans
+with `invoke_agent` spans: [maf-dev-loop](../maf-dev-loop/SKILL.md).
 
-## Reference
+## References
 
-Deeper configuration notes, model selection, and a full session-config matrix are in
-[references/session-config.md](references/session-config.md).
+| Task | Reference |
+|---|---|
+| Full session-config matrix, model selection, migration table | [references/session-config.md](references/session-config.md) |
+| Voice catalogue, avatars, MCP approval detail | [references/voices-and-avatars.md](references/voices-and-avatars.md) |
+

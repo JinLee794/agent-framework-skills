@@ -1,12 +1,13 @@
 ---
 name: maf-foundry-agent
-description: "Building the reasoning agent: FoundryChatClient vs FoundryAgent, hosted tools, function tools, skills, MCP, memory, retrieval, sessions, middleware, hosting. Load for work under src/agents, src/tools, src/memory, src/retrieval."
+description: "Building the reasoning agent: FoundryChatClient vs FoundryAgent, hosted tools, function tools, skills, MCP, memory, retrieval, sessions, middleware, hosting. Load for work under src/agents, src/tools, src/memory, src/retrieval. NOT for knowledge bases, knowledge sources, or Azure AI Search indexing — load foundry-iq for those."
 license: MIT
 compatibility: Python 3.10+; agent-framework + agent-framework-foundry; Foundry project endpoint.
 metadata:
   author: MAFVoiceSeed
-  version: "2.0.0"
-  verified-against: "Microsoft Agent Framework GA docs + python samples, 2026-07"
+  version: "2.1.0"
+  last-reviewed: "2026-07-28"
+  verified-against: "agent-framework + agent-framework-foundry GA docs and python samples, 2026-07"
 ---
 
 # MAF on Foundry — Agent Patterns
@@ -18,6 +19,9 @@ Depth lives in references. Load one only when the task needs it.
 | Write a `@tool`, author an Agent Skill, wire MCP, set approval modes | [references/tools-and-skills.md](references/tools-and-skills.md) |
 | Cross-session memory, scoping, history, custom `ContextProvider` | [references/memory-and-context.md](references/memory-and-context.md) |
 | Ground the agent in a document corpus — search, vector stores, file search | [references/retrieval.md](references/retrieval.md) |
+
+Grounding in a **knowledge base** — Foundry IQ, knowledge sources, indexing, permission
+trimming — is the separate `foundry-iq` skill.
 
 ## Install
 

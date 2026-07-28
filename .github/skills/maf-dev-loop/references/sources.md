@@ -64,6 +64,26 @@ frontmatter spec, `SkillsProvider` API, memory store beta→GA status, scope sem
 `ContextProvider` hook signatures, stable vs preview search API version, agentic retrieval /
 knowledge base surface, vector store lifecycle, citation shape.
 
+## foundry-iq
+
+Covers the SKILL body plus `references/knowledge-sources.md`, `references/setup.md`, and
+`references/wiring.md`.
+
+- What is Foundry IQ: https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-foundry-iq
+- Connect a knowledge base to an agent: https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/foundry-iq-connect
+- Knowledge source overview: https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-overview
+- Blob knowledge source how-to: https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-blob
+- Create a knowledge base: https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-how-to-create-knowledge-base
+- Retrieve: https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-how-to-retrieve
+- `azure-search-documents` changelog: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/CHANGELOG.md
+
+Watch for: stable vs preview API version strings and which features moved to GA, knowledge
+source `kind` list and preview stages, model support matrix for the knowledge base LLM, model
+class import paths (they differ between the stable and preview packages), `retrieve` request
+and response field names, `activity` token-usage keys, permission option values, the MCP
+endpoint URL shape and its supported tool list, role names on both the search and Foundry
+sides, `AzureAISearchContextProvider` kwargs.
+
 ## maf-dev-loop
 
 Covers the SKILL body plus `references/observability.md`.
@@ -79,6 +99,21 @@ Watch for: CLI flag names (`--instrumentation` vs `--tracing`, auth flags — do
 have diverged before), discovery contract (`agent` / `workflow` export), DevUI-specific stream
 event names, span/metric attribute names (they still churn), setup function names, the
 sensitive-data opt-in flag.
+
+## Tooling skills
+
+`mermaid-diagrams` and `skill-pack-audit` describe editor and process surfaces, not Azure SDKs,
+so they are outside the package-pin sync above. They still go stale — check them on the same
+cadence, against different ground truth:
+
+- `mermaid-diagrams` — the Mermaid Chart extension listing:
+  https://marketplace.visualstudio.com/items?itemName=MermaidChart.vscode-mermaid-chart
+  Watch for: LM tool names, command IDs, slash-command names, and whether the extension has
+  resumed writing `.github/instructions/mermaid.instructions.md`.
+- `skill-pack-audit` — VS Code custom-instructions and skills docs:
+  https://code.visualstudio.com/docs/copilot/customization/custom-instructions
+  Watch for: `SKILL.md` frontmatter fields, discovery paths, and how much of a skill the agent
+  loads before matching — the invariants depend on that model.
 
 ## Link hygiene
 

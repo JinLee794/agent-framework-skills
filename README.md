@@ -15,10 +15,14 @@ repo and your agent stops guessing at API surfaces, config contracts, and GA req
 | `maf-agent-config` | Changing agent instructions, model, tools, voice, or VAD in YAML |
 | `voicelive-realtime` | Working with VoiceLive sessions, turn detection, barge-in, avatars |
 | `maf-foundry-agent` | Building the reasoning agent — clients, tools, MCP, memory, retrieval |
+| `foundry-iq` | Grounding an agent in your own content — knowledge bases, Azure AI Search, indexing |
 | `maf-dev-loop` | Running in DevUI, wiring telemetry, or refreshing a stale skill |
+| `mermaid-diagrams` | Producing any diagram — validate-then-preview workflow (not MAF-specific) |
+| `skill-pack-audit` | Reviewing a skill pack for duplication, routing drift, and context cost |
 
 Each skill is a `SKILL.md` (the always-relevant contract) plus a `references/` folder loaded
-only when a task actually needs that depth.
+only when a task actually needs that depth. `.github/copilot-instructions.md` is the single
+routing surface — it maps tasks to skills and carries the house rules that apply everywhere.
 
 ## Install
 
@@ -51,6 +55,9 @@ APIs. When those drift, the skill actively causes bugs.
 `maf-dev-loop/references/skill-sync.md` defines the sync procedure and its ground-truth
 precedence: the installed package first, then release notes, then Microsoft Learn, then repo
 samples. Never resolve a conflict by preference.
+
+`skill-pack-audit` covers the other half — whether a claim sits in the right place, exactly
+once. Run it after adding a skill, or when the agent starts loading the wrong one.
 
 ## License
 

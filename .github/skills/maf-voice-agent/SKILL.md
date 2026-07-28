@@ -1,56 +1,20 @@
 ---
 name: maf-voice-agent
-description: "Non-negotiable GA rules, repo layout, and integration topology for Foundry-native voice agents (MAF + Azure AI VoiceLive). Load when scaffolding, deciding where code goes, choosing a topology, or reviewing for GA conformance."
+description: "Repo layout, integration topology, and the environment contract for Foundry-native voice agents (MAF + Azure AI VoiceLive), plus the GA conformance checklist. Load when scaffolding a repo, deciding where code goes, choosing between VoiceLive-native / MAF-bridge / hosted topologies, or reviewing work before it ships."
 license: MIT
 compatibility: Python 3.10+; azure-ai-voicelive>=1.2.0; agent-framework + agent-framework-foundry; Azure AI Foundry project endpoint.
 metadata:
   author: MAFVoiceSeed
-  version: "2.0.0"
+  version: "2.1.0"
+  last-reviewed: "2026-07-28"
   verified-against: "azure-ai-voicelive 1.2.0 (GA, api-version 2026-04-10); Microsoft Agent Framework GA docs 2026-07"
 ---
 
-# Voice Agent — GA Rules & Structure
+# Voice Agent — Structure & Topology
 
-Four sibling skills cover the rest. Load only the one that matches the task; you do not need
-to read this file first unless the task is scaffolding, layout, topology, or a conformance
-review.
-
-| Task | Skill |
-|---|---|
-| Agent/voice behaviour — instructions, model, tools, VAD, voice profile | `maf-agent-config` |
-| Realtime speech loop — VAD, barge-in, voices, avatars, audio formats | `voicelive-realtime` |
-| The reasoning agent — clients, tools, skills, MCP, memory, retrieval, hosting | `maf-foundry-agent` |
-| Local run/debug, telemetry, keeping these skills current | `maf-dev-loop` |
-| Provision Foundry resources, deploy models, RBAC, azd, evals | `microsoft-foundry` (user-scoped) |
-
-## Non-negotiable GA rules
-
-This is the single home for these. Apply them before anything else.
-
-1. **Behaviour lives in YAML, not Python.** Instructions, model, temperature, tool lists,
-   voice, VAD, and interim responses belong in `config/**.yaml`; Python loads, validates, and
-   constructs. A literal `instructions="..."` or `ServerVad(threshold=...)` in `src/` is a
-   defect.
-2. **The caller is untrusted input.** The primary input channel is a human speaking. A caller
-   can claim any identity and can attempt prompt injection out loud. Bind identity, memory
-   `scope`, and security filters from the *authenticated* session, never from the transcript.
-3. **VoiceLive is async-only.** The sync client was removed in `1.0.0`. Always
-   `from azure.ai.voicelive.aio import connect`.
-4. **`FoundryAgentTool` no longer exists** (removed in `1.2.0`). To make a Foundry agent the
-   voice responder, pass flattened kwargs to `connect(agent_name=..., project_name=...)`.
-5. **The `agent_framework.azure` *AI agent clients* were removed** (`AzureAIClient`,
-   `AzureAIAgentClient`, `AzureAIAgentsProvider`, `AzureAIProjectAgentProvider`). Use
-   `agent_framework.foundry`. The namespace still hosts other surfaces such as
-   `AzureAISearchContextProvider` — do not blanket-ban `agent_framework.azure`.
-6. **Agent Framework does not auto-load `.env`.** Call `load_dotenv()` at process start.
-7. **Prefer Foundry-native services over hand-rolled ones.** Memory store over a custom vector
-   DB, hosted tools over bespoke HTTP wrappers, toolboxes over per-agent tool duplication, App
-   Insights via the project connection over a pasted connection string.
-8. **`DefaultAzureCredential`/`AzureCliCredential` locally, a named managed identity in
-   production.** Never commit API keys; `AzureKeyCredential` is a local-dev convenience only.
-9. **Output audio format enums use underscores** (`pcm16_16000hz`), not hyphens.
-10. **One `build_<name>_agent(client, **deps) -> Agent` factory per agent.** It is what lets
-    the voice loop, DevUI, and tests mount the same object without duplication.
+The repo-wide house rules are in `.github/copilot-instructions.md` and always apply. This skill
+owns three things no other skill does: **which topology**, **where files go**, and **the
+conformance checklist**. Routing to sibling skills is in `copilot-instructions.md`.
 
 ## Choose an integration topology
 
@@ -59,6 +23,7 @@ Mixing them is the most common source of duplicated turn-taking and double-bille
 
 | | A — VoiceLive-native | B — MAF-brain bridge | C — Hosted `invocations_ws` |
 |---|---|---|---|
+| `topology:` value in voice YAML | `foundry_agent` | `maf_bridge` | `hosted` |
 | Who reasons | Foundry agent, service-side | local MAF `Agent` behind a VoiceLive function tool | agent deployed in Foundry |
 | Pick when | tools and instructions are stable and can live in the agent definition | you need dynamic tool exposure, per-request instructions, local context providers, or multi-agent | you need Foundry scaling, versioned traffic splitting, server-side session isolation |
 | Cost | lowest latency, least code | extra hop; **requires** `interim_response` (`InterimResponseTrigger.TOOL`) or the caller hears silence | deployment complexity |
@@ -76,7 +41,8 @@ async with connect(
 ```
 
 A is the default. For C, use the `microsoft-foundry` skill's `invocations-ws` sub-skill for
-deployment and this skill set for the agent's internals.
+deployment and this skill set for the agent's internals. The loader constraints each topology
+enforces are in `maf-agent-config`.
 
 ## Canonical repository layout
 
@@ -137,30 +103,14 @@ AZURE_EXPERIMENTAL_ENABLE_GENAI_TRACING=true
 3. Create each `ref` tool in `tools/` with tests, then register it.
 4. Wire telemetry before the first client construction; verify a trace appears.
 5. Add a DevUI entity that loads the same YAML — no copy-pasted config.
-6. Provision memory stores, vector stores, and search indexes in `infra/`, never at request time.
-7. Run the conformance review below.
+6. Provision memory stores, vector stores, knowledge bases, and search indexes in `infra/`,
+   never at request time.
+7. Run the conformance review.
 
 ## GA-conformance review
 
-Grep for these before declaring work complete.
+The grep checklist is [references/conformance.md](references/conformance.md) — removed APIs,
+misplaced behaviour, loader validation, lifecycle, and security trimming. Load it before
+declaring any work complete. It is the only file in this pack permitted to restate a fact that
+another skill owns, because each row is a literal search pattern.
 
-| Pattern | Verdict |
-|---|---|
-| `instructions="..."` literal in `src/` | Move to `config/agents/*.agent.yaml` |
-| `RequestSession(...)` / `ServerVad(...)` outside the config builders | Move to `config/voice/*.voice.yaml` |
-| Pydantic config model without `extra="forbid"` | Typos become silent no-ops |
-| Secret or connection string in `config/**.yaml` | Replace with `${VAR}` |
-| `from azure.ai.voicelive import connect` (non-`aio`) | Removed API |
-| `FoundryAgentTool`, `ResponseFoundryAgentCallItem` | Removed in 1.2.0 — use `connect()` kwargs |
-| `AzureAIClient`, `AzureAIAgentClient`, `AzureAIAgentsProvider`, `AzureAIProjectAgentProvider` | Removed — use `agent_framework.foundry` |
-| `"pcm16-16000hz"` (hyphenated) | Wrong enum value — use `pcm16_16000hz` |
-| `EOUDetection`, `AzureMultilingualSemanticVad`, `OAIVoice`, `ToolChoiceObject`, `Usage` | Renamed — see `voicelive-realtime` |
-| `threshold=` / `timeout=` on an `AzureSemanticDetection*` object | Use `threshold_level=` / `timeout_ms=`. `threshold=` on the *VAD* is still correct |
-| `approval:` missing on a `ref` tool in agent YAML | Loader must raise; no default |
-| `approval_mode` omitted on a tool with side effects | Add `always_require` |
-| More than one `configure_otel_providers()` / `configure_azure_monitor()` call | Consolidate |
-| `AzureAISearchContextProvider` not inside `async with` / never `close()`d | Leaks clients |
-| Vector store or memory store created per request | Provision once in `infra/` |
-| Search index queried without a security-trimming filter | Every caller reads every document |
-| Agent config or telemetry setup inside `entities/**/__init__.py` | Drift + duplicate exporters |
-| Hard-coded connection strings or API keys | Replace with credential + env |

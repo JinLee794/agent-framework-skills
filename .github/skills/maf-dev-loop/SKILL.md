@@ -5,8 +5,9 @@ license: MIT
 compatibility: Python 3.10+; agent-framework-devui (--pre); azure-monitor-opentelemetry; azure-ai-voicelive>=1.2.0.
 metadata:
   author: MAFVoiceSeed
-  version: "1.0.0"
-  verified-against: "Learn /agent-framework/devui + observability docs; microsoft/agent-framework python/packages/devui; azure-ai-voicelive telemetry samples, 2026-07"
+  version: "1.1.0"
+  last-reviewed: "2026-07-28"
+  verified-against: "agent-framework-devui (--pre); azure-monitor-opentelemetry; azure-ai-voicelive 1.2.0 telemetry samples; Learn /agent-framework/devui + observability docs, 2026-07"
 ---
 
 # Dev Loop — DevUI, Telemetry, Skill Sync

@@ -23,7 +23,7 @@ Expanded form of the canonical layout in `SKILL.md`. Deviate only with a recorde
 │   ├── __init__.py
 │   ├── settings.py                 # ONLY place that reads os.environ
 │   ├── config/
-│   │   ├── models.py               # pydantic v2, extra="forbid"
+│   │   ├── models.py               # pydantic v2 config models
 │   │   ├── loader.py               # extends merge, ${ENV}, startup validation
 │   │   ├── registry.py             # ref string -> callable; no importlib from config
 │   │   └── builders.py             # AgentConfig -> Agent ; VoiceConfig -> RequestSession

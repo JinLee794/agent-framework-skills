@@ -39,6 +39,38 @@ models. For voice, keep it low — reasoning latency is audible.
 | `reasoning_effort` | `ReasoningEffort` | Low for latency-sensitive voice |
 | `metadata` | `dict[str, str]` | Correlate turns with your own request IDs |
 
+### Worked construction
+
+What `src/<package>/config/builders.py` produces from a `.voice.yaml`. Never hand-write this
+in application code.
+
+```python
+from azure.ai.voicelive.models import (
+    AudioEchoCancellation,
+    AudioInputTranscriptionOptions,
+    AudioNoiseReduction,
+    AzureStandardVoice,
+    InputAudioFormat,
+    Modality,
+    OutputAudioFormat,
+    RequestSession,
+    ServerVad,
+)
+
+session = RequestSession(
+    modalities=[Modality.TEXT, Modality.AUDIO],
+    instructions="You are a concise, friendly phone concierge.",
+    voice=AzureStandardVoice(name="en-US-AvaNeural", type="azure-standard"),
+    input_audio_format=InputAudioFormat.PCM16,
+    output_audio_format=OutputAudioFormat.PCM16,
+    input_audio_echo_cancellation=AudioEchoCancellation(),
+    input_audio_noise_reduction=AudioNoiseReduction(),
+    input_audio_transcription=AudioInputTranscriptionOptions(model="whisper-1"),
+    turn_detection=ServerVad(threshold=0.5, prefix_padding_ms=300, silence_duration_ms=500),
+)
+await connection.session.update(session=session)
+```
+
 ## Telephony profile (G.711)
 
 ```python

@@ -5,9 +5,9 @@ license: MIT
 compatibility: Python 3.10+; pydantic v2; PyYAML; agent-framework-foundry; azure-ai-voicelive>=1.2.0.
 metadata:
   author: MAFVoiceSeed
-  version: "2.0.0"
-  last-reviewed: "2026-07-27"
-  verified-against: "Repo convention. SDK field names cross-checked against maf-foundry-agent and voicelive-realtime."
+  version: "2.1.0"
+  last-reviewed: "2026-07-28"
+  verified-against: "pydantic 2.x; PyYAML 6.x; repo convention. SDK field names cross-checked against maf-foundry-agent and voicelive-realtime."
 ---
 
 # Agent & Voice Configuration — YAML Contract
@@ -148,9 +148,9 @@ session:
 - `topology` is declared, not inferred, and the loader enforces it: `foundry_agent` forbids
   `session.instructions` and `session.tools` (the agent definition is authoritative);
   `maf_bridge` **requires** `interim_response` and an `agent` reference.
-- Enum-ish values are lowercase snake_case and mapped to SDK enums by the loader —
-  `pcm16_16000hz`, never `pcm16-16000hz`. The mapping table is the one place that trap is
-  handled.
+- Enum-ish values are lowercase snake_case and mapped to SDK enums by the loader. The full
+  YAML-key → SDK-type mapping, including the audio format spellings, is owned by
+  `voicelive-realtime`; the loader must reject anything not in it.
 - `turn_detection: ~` is meaningful (client-driven turn taking) and must be written
   explicitly. Omission inherits from `_base`.
 

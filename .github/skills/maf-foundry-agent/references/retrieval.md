@@ -14,6 +14,11 @@ that "remember" documents and "retrieve" user facts, and both degrade.
 | **`get_azure_ai_search_tool()`** (experimental) | Foundry service | Index queried service-side via a project connection, on the model's initiative |
 | **Content Understanding + `file_search`** | CU then vector store | Scanned PDFs, audio, video, 100+ page documents |
 
+Anything involving a **knowledge base** — creating one, wiring knowledge sources, indexing,
+re-indexing, permission trimming, the MCP endpoint, or the Foundry portal flow — is the
+`foundry-iq` skill. This file covers only how MAF consumes retrieval; `foundry-iq` covers how
+the corpus gets there and how it is secured.
+
 Two axes decide most cases:
 
 - **Always-on vs on-demand.** A context provider retrieves before *every* run whether the

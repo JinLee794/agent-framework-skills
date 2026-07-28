@@ -71,13 +71,18 @@ here — map it in the sample-porting step instead, so there is exactly one name
 
 Read by `AzureAISearchContextProvider` under the `AZURE_SEARCH_` prefix, so explicit kwargs
 override these. See
-[maf-foundry-agent/references/retrieval.md](../../maf-foundry-agent/references/retrieval.md).
+[maf-foundry-agent/references/retrieval.md](../../maf-foundry-agent/references/retrieval.md)
+for how MAF consumes them, and [foundry-iq](../../foundry-iq/SKILL.md) for provisioning the
+knowledge base and its sources.
 
 | Variable | Notes |
 |---|---|
 | `AZURE_SEARCH_ENDPOINT` | `https://<service>.search.windows.net` |
 | `AZURE_SEARCH_INDEX_NAME` | Index to query (semantic mode, or to auto-create a Knowledge Base) |
 | `AZURE_SEARCH_KNOWLEDGE_BASE_NAME` | Existing Knowledge Base for agentic mode. Mutually exclusive with `AZURE_SEARCH_INDEX_NAME` |
+| `AZURE_SEARCH_API_VERSION` | Pin it. `2026-04-01` (GA) or `2026-05-01-preview` |
+| `AZURE_SEARCH_MCP_ENDPOINT` | `${AZURE_SEARCH_ENDPOINT}/knowledgebases/<kb>/mcp?api-version=<ver>`. MCP path only |
+| `FOUNDRY_KB_CONNECTION_NAME` | Foundry project connection to the knowledge base. Agent/MCP path only |
 | `AZURE_SEARCH_API_KEY` | Local dev only; omit to use `credential=` |
 | `AZURE_OPENAI_RESOURCE_URL` | Agentic mode only. The Azure OpenAI resource URL — **not** the Foundry project endpoint |
 | `FOUNDRY_VECTOR_STORE_ID` | Pre-provisioned vector store for hosted `file_search` |
@@ -108,6 +113,9 @@ FOUNDRY_MEMORY_STORE=
 AZURE_SEARCH_ENDPOINT=
 AZURE_SEARCH_INDEX_NAME=
 # AZURE_SEARCH_KNOWLEDGE_BASE_NAME=   # agentic mode; mutually exclusive with INDEX_NAME
+# AZURE_SEARCH_API_VERSION=2026-04-01 # pin it; *-preview only for a named capability
+# AZURE_SEARCH_MCP_ENDPOINT=          # MCP path only
+# FOUNDRY_KB_CONNECTION_NAME=         # MCP path only
 # AZURE_SEARCH_API_KEY=              # local dev only
 # AZURE_OPENAI_RESOURCE_URL=         # agentic mode only; NOT the Foundry project endpoint
 # FOUNDRY_VECTOR_STORE_ID=
@@ -123,7 +131,7 @@ OTEL_RESOURCE_ATTRIBUTES=deployment.environment=dev
 
 ## Loading rules
 
-- Call `load_dotenv()` once, at the process entry point. Agent Framework never does it for you.
+- Call `load_dotenv()` once, at the process entry point — see `maf-foundry-agent` for why.
 - DevUI loads `.env` files itself (entity-level then parent-level).
 - In production, prefer app configuration / managed identity over `.env` files entirely.
 - Never set `ENABLE_SENSITIVE_DATA=true` or `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true`
