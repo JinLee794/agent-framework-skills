@@ -55,7 +55,8 @@ Expanded form of the canonical layout in `SKILL.md`. Deviate only with a recorde
 │   ├── tools/                       # unit tests, no network
 │   ├── agents/                      # agent tests with a stub chat client
 │   └── voice/                       # event-loop tests against recorded event fixtures
-├── .github/skills/                  # BUILD-TIME skills (this directory)
+├── .github/skills/                  # BUILD-TIME skills for GitHub Copilot
+├── .cursor/skills/                  # mirrored BUILD-TIME skills for Cursor (this directory)
 ├── .env.example
 ├── pyproject.toml
 └── README.md

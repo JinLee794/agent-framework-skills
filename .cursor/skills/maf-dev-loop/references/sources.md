@@ -1,6 +1,6 @@
 # Skill Sources — Registry
 
-The single place URLs are maintained. One section per skill in `.github/skills/`.
+The single place URLs are maintained. One section per skill in `.cursor/skills/`.
 Fetch order within a section is top to bottom; stop as soon as the question is answered.
 
 Learn MCP endpoint (optional, for `.vscode/mcp.json`): `https://learn.microsoft.com/api/mcp`

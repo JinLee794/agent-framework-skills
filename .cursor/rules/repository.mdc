@@ -1,0 +1,13 @@
+---
+description: "Repository-wide MAF voice-agent routing and house rules"
+alwaysApply: true
+---
+
+# Repository Instructions
+
+Apply @.github/copilot-instructions.md as the canonical repository instructions for every
+Cursor Agent chat.
+
+When those instructions refer to build-time coding-agent skills under `.github/skills/`, use
+the matching skill under `.cursor/skills/`. Cursor-specific skill references and commands must
+use `.cursor/skills/`; keep all other skill content synchronized with `.github/skills/`.

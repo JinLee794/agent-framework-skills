@@ -97,7 +97,7 @@ skills:
   auto_approve_read_only: true    # load_skill + read_skill_resource; still gates run_skill_script
 ```
 
-Never point `paths` at `.github/skills/` — those are build-time skills for the coding agent.
+Never point `paths` at `.cursor/skills/` — those are build-time skills for the coding agent.
 
 ## `session`
 

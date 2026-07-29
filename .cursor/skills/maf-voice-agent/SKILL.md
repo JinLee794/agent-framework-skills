@@ -12,9 +12,10 @@ metadata:
 
 # Voice Agent — Structure & Topology
 
-The repo-wide house rules are in `.github/copilot-instructions.md` and always apply. This skill
-owns three things no other skill does: **which topology**, **where files go**, and **the
-conformance checklist**. Routing to sibling skills is in `copilot-instructions.md`.
+The repo-wide house rules are applied by `.cursor/rules/repository.mdc`, which imports the
+canonical `.github/copilot-instructions.md`. This skill owns three things no other skill does:
+**which topology**, **where files go**, and **the conformance checklist**. Routing to sibling
+skills remains in those canonical instructions.
 
 ## Fixed integration topology
 
@@ -69,15 +70,17 @@ Full annotations in [references/repo-layout.md](references/repo-layout.md).
   skills/                    # runtime Agent Skills served via SkillsProvider
   entities/                  # DevUI discovery roots; each exports `agent` or `workflow`
   tests/
-  .github/skills/            # engineering skills for the coding agent (this directory)
+  .github/skills/            # engineering skills for GitHub Copilot
+  .cursor/skills/            # mirrored engineering skills for Cursor (this directory)
   .env.example
 ```
 
 `config/` holds behaviour, env holds deployment values, `src/` holds code. A value in the
 wrong one of those three is the most common config defect.
 
-Two skill trees, deliberately: `skills/` is **runtime** (loaded by `SkillsProvider`);
-`.github/skills/` is **build-time** (loaded by the coding agent). Never ship the latter.
+Two skill roles, deliberately: `skills/` is **runtime** (loaded by `SkillsProvider`);
+`.github/skills/` and `.cursor/skills/` are mirrored **build-time** trees loaded by their
+respective coding agents. Never ship either build-time tree.
 
 ### Layering rules
 

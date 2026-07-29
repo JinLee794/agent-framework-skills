@@ -124,14 +124,15 @@ Compose local sources directly instead of subclassing `SkillsProvider`: `FileSki
 `InMemorySkillsSource`, `AggregatingSkillsSource`, `DeduplicatingSkillsSource`,
 `CachingSkillsSource`, `FilteringSkillsSource`.
 
-### Two skill trees in this repo
+### Two skill roles in this repo
 
 | Path | Audience | Shipped to runtime |
 |---|---|---|
 | `skills/` | the deployed agent, via `SkillsProvider` | yes |
-| `.github/skills/` | the coding agent working on this repo | no |
+| `.github/skills/` | GitHub Copilot working on this repo | no |
+| `.cursor/skills/` | Cursor working on this repo | no |
 
-Same format, different consumers. Never point `SkillsProvider` at `.github/skills/`.
+Same format, different consumers. Never point `SkillsProvider` at either build-time tree.
 
 ## Security checklist
 
@@ -154,4 +155,4 @@ Same format, different consumers. Never point `SkillsProvider` at `.github/skill
 | One tool with a `mode` / `action` flag | Split into separate tools |
 | Tool raising instead of returning an error string | Model cannot recover |
 | Approve-everything rule with third-party skills | `run_skill_script` executes code |
-| `SkillsProvider` pointed at `.github/skills/` | Build-time skills shipped to runtime |
+| `SkillsProvider` pointed at `.github/skills/` or `.cursor/skills/` | Build-time skills shipped to runtime |
