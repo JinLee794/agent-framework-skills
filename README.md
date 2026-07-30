@@ -17,7 +17,7 @@ API surfaces, config contracts, and GA requirements.
 gh repo create <your-org>/<your-repo> --template JinLee794/agent-framework-skills --private --clone
 ```
 
-You get `.github/skills/` and `.github/copilot-instructions.md` ready to go. Add your `src/`,
+You get `.cursor/skills/` and `.cursor/copilot-instructions.md` ready to go. Add your `src/`,
 `config/`, and `tests/` on top — `maf-voice-agent/references/repo-layout.md` describes the
 layout the skills assume.
 
@@ -26,17 +26,17 @@ time:
 
 ```powershell
 git clone https://github.com/JinLee794/agent-framework-skills.git
-Copy-Item agent-framework-skills\.github\skills\* .github\skills\ -Recurse
+Copy-Item agent-framework-skills\.cursor\skills\* .cursor\skills\ -Recurse
 ```
 
-In VS Code, skills under `.github/skills/` are discovered automatically.
-`.github/copilot-instructions.md` is the single routing surface — it maps tasks to skills and
+In VS Code, skills under `.cursor/skills/` are discovered automatically.
+`.cursor/copilot-instructions.md` is the single routing surface — it maps tasks to skills and
 carries the house rules that apply everywhere. Copy it too, or merge its routing table into
 your existing instructions file.
 
 ### After you generate
 
-1. **Set the routing table.** `.github/copilot-instructions.md` lists every skill in the pack.
+1. **Set the routing table.** `.cursor/copilot-instructions.md` lists every skill in the pack.
    Delete rows for skills you removed; add rows for skills you add. No skill restates it.
 2. **Rewrite `metadata.author`** in each `SKILL.md` frontmatter — it ships as `MAFVoiceSeed`.
 3. **Re-check the house rules.** Rules 1–7 in `copilot-instructions.md` encode opinions about
@@ -55,7 +55,7 @@ your existing instructions file.
 | `maf-agent-config` | Changing agent instructions, model, tools, voice, or VAD in YAML |
 | `voicelive-realtime` | Working with VoiceLive sessions, turn detection, barge-in, avatars |
 | `maf-foundry-agent` | Building the reasoning agent — clients, tools, MCP, memory, retrieval |
-| `foundry-iq` | Grounding an agent in your own content — knowledge bases, Azure AI Search, indexing |
+| `ai-search` | Grounding an agent in your own content — knowledge bases, Azure AI Search, indexing |
 | `maf-dev-loop` | Running in DevUI, wiring telemetry, or refreshing a stale skill |
 | `mermaid-diagrams` | Producing any diagram — validate-then-preview workflow (not MAF-specific) |
 | `skill-pack-audit` | Reviewing a skill pack for duplication, routing drift, and context cost |
@@ -64,14 +64,14 @@ Each skill is a `SKILL.md` (the always-relevant contract) plus a `references/` f
 only when a task actually needs that depth.
 
 ```text
-.github/
+.cursor/
 ├─ copilot-instructions.md          # routing table + house rules (always on)
 └─ skills/
    ├─ maf-voice-agent/              # SKILL.md + conformance, env-contract, repo-layout
    ├─ maf-agent-config/             # SKILL.md + agent-yaml, voice-yaml
    ├─ voicelive-realtime/           # SKILL.md + session-config, voices-and-avatars
    ├─ maf-foundry-agent/            # SKILL.md + tools-and-skills, memory-and-context, retrieval
-   ├─ foundry-iq/                   # SKILL.md + knowledge-sources, setup, wiring
+   ├─ ai-search/                   # SKILL.md + knowledge-sources, setup, wiring
    ├─ maf-dev-loop/                 # SKILL.md + observability, skill-sync, sources
    ├─ mermaid-diagrams/             # SKILL.md
    └─ skill-pack-audit/             # SKILL.md
@@ -108,10 +108,10 @@ names.
 
 | Server | Type | Endpoint / install | Why it helps here |
 |---|---|---|---|
-| [Microsoft Learn](https://github.com/MicrosoftDocs/mcp) | remote | `https://learn.microsoft.com/api/mcp` | **Start here.** Free, no auth. `microsoft_docs_search`, `microsoft_docs_fetch`, `microsoft_code_sample_search` against official docs. The [skill-sync procedure](.github/skills/maf-dev-loop/references/skill-sync.md) prefers it over `fetch_webpage` |
-| [Microsoft Foundry](https://learn.microsoft.com/azure/ai-foundry/mcp/get-started) | remote | `https://mcp.ai.azure.com` | Models, knowledge, and evaluation tools against your real project — grounds `maf-foundry-agent` and `foundry-iq` work in deployments that actually exist |
-| [Azure MCP Server](https://learn.microsoft.com/azure/developer/azure-mcp-server/) | local | VS Code extension `ms-azuretools.vscode-azure-mcp-server` | Azure AI Search, RBAC, Monitor, and Key Vault tools — covers knowledge-base setup, the role assignments in `foundry-iq/references/setup.md`, and App Insights queries from `maf-dev-loop` |
-| [GitHub](https://github.com/github/github-mcp-server) | remote | `https://api.githubcopilot.com/mcp` | Reads `microsoft/agent-framework` samples and SDK changelogs at `main`, which is often ahead of the released package |
+| [Microsoft Learn](https://github.com/MicrosoftDocs/mcp) | remote | `https://learn.microsoft.com/api/mcp` | **Start here.** Free, no auth. `microsoft_docs_search`, `microsoft_docs_fetch`, `microsoft_code_sample_search` against official docs. The [skill-sync procedure](.cursor/skills/maf-dev-loop/references/skill-sync.md) prefers it over `fetch_webpage` |
+| [Microsoft Foundry](https://learn.microsoft.com/azure/ai-foundry/mcp/get-started) | remote | `https://mcp.ai.azure.com` | Models, knowledge, and evaluation tools against your real project — grounds `maf-foundry-agent` and `ai-search` work in deployments that actually exist |
+| [Azure MCP Server](https://learn.microsoft.com/azure/developer/azure-mcp-server/) | local | VS Code extension `ms-azuretools.vscode-azure-mcp-server` | Azure AI Search, RBAC, Monitor, and Key Vault tools — covers knowledge-base setup, the role assignments in `ai-search/references/setup.md`, and App Insights queries from `maf-dev-loop` |
+| [GitHub](https://github.com/github/github-mcp-server) | remote | `https://api.cursorcopilot.com/mcp` | Reads `microsoft/agent-framework` samples and SDK changelogs at `main`, which is often ahead of the released package |
 
 VS Code reads `.vscode/mcp.json`. The template does not ship one — add what you need:
 
@@ -131,12 +131,12 @@ The full first-party catalog is at [microsoft/mcp](https://github.com/microsoft/
 Different concern, same protocol. The pack covers this too:
 
 - **From a MAF agent** — `get_mcp_tool()` on `FoundryChatClient`, plus `approval_mode`
-  semantics: [maf-foundry-agent/references/tools-and-skills.md](.github/skills/maf-foundry-agent/references/tools-and-skills.md)
+  semantics: [maf-foundry-agent/references/tools-and-skills.md](.cursor/skills/maf-foundry-agent/references/tools-and-skills.md)
 - **From VoiceLive directly** — the speech loop can call a remote MCP server without a round
   trip through your process; `MCPApprovalType` controls consent:
-  [voicelive-realtime](.github/skills/voicelive-realtime/SKILL.md)
+  [voicelive-realtime](.cursor/skills/voicelive-realtime/SKILL.md)
 - **A knowledge base as an MCP server** — `AZURE_SEARCH_MCP_ENDPOINT` exposes
-  `knowledge_base_retrieve`: [foundry-iq/references/wiring.md](.github/skills/foundry-iq/references/wiring.md)
+  `knowledge_base_retrieve`: [ai-search/references/wiring.md](.cursor/skills/ai-search/references/wiring.md)
 
 > **Trust boundary.** A remote MCP server is third-party code deciding what your agent sees.
 > Never auto-approve tools from a server you do not control, and treat every tool result as
@@ -145,7 +145,7 @@ Different concern, same protocol. The pack covers this too:
 ## Sources & references
 
 Every claim in the pack traces back to one of the artifacts below. Skills state facts; they do
-not carry URLs — **`.github/skills/maf-dev-loop/references/sources.md` is the maintained
+not carry URLs — **`.cursor/skills/maf-dev-loop/references/sources.md` is the maintained
 registry**, and the sync procedure reads it. The list here mirrors it for browsing; if the two
 ever disagree, `sources.md` wins.
 
@@ -188,8 +188,8 @@ The installed package is the strongest signal for "does this symbol exist". Rele
 
 ### Foundry IQ & Azure AI Search
 
-- [What is Foundry IQ](https://learn.microsoft.com/azure/foundry/agents/concepts/what-is-foundry-iq)
-- [Connect a knowledge base to an agent](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
+- [What is Foundry IQ](https://learn.microsoft.com/azure/foundry/agents/concepts/what-is-ai-search)
+- [Connect a knowledge base to an agent](https://learn.microsoft.com/azure/foundry/agents/how-to/ai-search-connect)
 - [Knowledge source overview](https://learn.microsoft.com/azure/search/agentic-knowledge-source-overview) ·
   [blob knowledge source how-to](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-blob)
 - [Create a knowledge base](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-create-knowledge-base) ·

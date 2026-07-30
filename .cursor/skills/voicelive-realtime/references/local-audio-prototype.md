@@ -55,9 +55,9 @@ FOUNDRY_MODEL=<Voice Live-managed model ID or same-resource BYOM deployment name
 ```
 
 Call `load_dotenv()` once in the process entry point. Voice, instructions, VAD, formats, and
-echo cancellation remain in `config/voice/*.voice.yaml`; load them through the normal config
-builder. No `AZURE_VOICELIVE_*` setting is required for the primary Foundry deployment. The
-project-backed MAF brain uses Entra separately; see the
+echo cancellation remain in the `session` section of `config/voice/<name>.yaml`; load them through
+the normal config builder. No `AZURE_VOICELIVE_*` setting is required for the primary Foundry
+deployment. The project-backed MAF brain uses Entra separately; see the
 [environment contract](../../maf-voice-agent/references/env-contract.md).
 Confirm the VoiceLive model source before interpreting `FOUNDRY_MODEL`; BYOM also requires a
 matching `profile` query as described in [session configuration](session-config.md).
@@ -79,6 +79,10 @@ Default to the operating system's current input and output devices, but pass exp
 `input_device_index` and `output_device_index` to `PyAudio.open()` when the user selects them.
 Fail before connecting when no input or output device exists. Check microphone privacy access
 on Windows before changing code.
+
+On Windows, test the MME default and DirectSound primary capture endpoints rather than
+assuming they carry the same signal. Some drivers expose a valid but silent MME endpoint; use
+the supported DirectSound capture endpoint or an explicit `--input-device` in that case.
 
 The VoiceLive PCM path is signed 16-bit, 24 kHz, mono. Start with 50 ms capture chunks:
 
@@ -136,8 +140,10 @@ increasing generation. On `INPUT_AUDIO_BUFFER_SPEECH_STARTED`:
    partially staged audio from the old response.
 2. Call `connection.response.cancel()` when a response is active. Treat the race where the
    response already completed as benign.
-3. Call `connection.output_audio_buffer.clear()` to discard service-side output already
-   buffered for playback.
+
+Do not cancel an in-flight MAF bridge task. Complete it and send its function-call output so
+the VoiceLive conversation is not left waiting on an unresolved call. If a newer speech turn
+has started, do not create a spoken response for that superseded result.
 
 Do not close and reopen the speaker stream for every interruption. Invalidate stale packets
 while the stream remains open; reopening adds latency and often leaves Windows audio devices
@@ -186,12 +192,13 @@ as an audio-device failure.
 | No turn completes | Check server VAD config and confirm no manual `commit()` is mixed in |
 | Assistant interrupts itself | Use headphones first, then verify echo cancellation is enabled in YAML |
 | Choppy playback | Keep blocking work off asyncio; inspect queue underruns and chunk cadence |
-| Old words play after interruption | Invalidate local playback, cancel response, and clear service output |
+| Old words play after interruption | Invalidate local playback before canceling the active response |
 | Works for one turn only | Remove any `break` on `RESPONSE_DONE` |
 | Exit logs `Event loop is closed` | Stop capture and settle send futures before the loop exits |
 
 ## Completion contract
 
 The prototype is done when the device choice is visible, the session survives multiple turns,
-barge-in clears both local and remote audio, Ctrl+C releases all hardware, secrets remain only
-in the environment, and all behavioural settings still come from `config/voice/*.voice.yaml`.
+barge-in invalidates stale playback and cancels the active response, Ctrl+C releases all
+hardware, secrets remain only in the environment, and all behavioural settings still come
+from `config/voice/<name>.yaml`.

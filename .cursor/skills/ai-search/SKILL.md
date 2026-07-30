@@ -1,5 +1,5 @@
 ---
-name: foundry-iq
+name: ai-search
 description: "Build and debug code-first Azure AI Search indexing for Foundry agents: load local files, chunk text, generate embeddings through the Foundry project endpoint, create vector and semantic indexes, upload idempotently, and inspect the live service. Use for RAG ingestion, reindexing, schema mismatches, empty indexes, and retrieval checks. NOT for runtime retrieval wiring - load maf-foundry-agent."
 license: MIT
 compatibility: "Python 3.10+; openai; azure-identity; azure-search-documents; python-dotenv; tiktoken."

@@ -51,9 +51,10 @@ confirmation turn — write the description so the model can summarize the pendi
 ### Declaration-only tools
 
 `FunctionTool(name=..., description=..., func=None, input_model=...)` declares a tool with no
-implementation. `declaration_only` becomes true and the framework returns the call instead of
-executing it. Use for client-side execution, human-in-the-loop, and Foundry prompt agent
-definitions where implementations are supplied at connect time.
+implementation — every parameter is keyword-only and `name` is required. `declaration_only`
+becomes true and the framework returns the call instead of executing it. Use for client-side
+execution, human-in-the-loop, and Foundry prompt agent definitions where implementations are
+supplied at connect time.
 
 ### Runtime tool exposure
 
@@ -99,13 +100,12 @@ Progressive disclosure: descriptions advertised → `load_skill` (body) → `rea
 ```python
 from pathlib import Path
 
-from agent_framework import Agent, SkillsProvider, ToolApprovalMiddleware
+from agent_framework import SkillsProvider, ToolApprovalMiddleware
 
 skills = SkillsProvider.from_paths(skill_paths=Path(__file__).parent / "skills")
 
-agent = Agent(
-    client=client,
-    instructions="Use available skills before answering policy questions.",
+agent = build_assistant_agent(
+    client,
     context_providers=[skills],
     middleware=[
         ToolApprovalMiddleware(
@@ -114,6 +114,10 @@ agent = Agent(
     ],
 )
 ```
+
+The instruction telling the agent to consult its skills belongs in the `kind: Prompt`
+document, not in a literal passed from `src/`. Middleware must be supplied when the agent is
+constructed — `agent.middleware` is `None` until then, so it cannot be appended to.
 
 All three skill tools require approval by default. `read_only_tools_auto_approval_rule`
 auto-approves `load_skill` and `read_skill_resource` while still gating `run_skill_script`.
@@ -153,5 +157,7 @@ Same format, different consumers. Never point `SkillsProvider` at `.github/skill
 | A tool that imports from `agents/` | Inverts the layering — tools are leaf modules |
 | One tool with a `mode` / `action` flag | Split into separate tools |
 | Tool raising instead of returning an error string | Model cannot recover |
+| A tool argument carrying identity, tenant, or a security filter | The model can forge it; bind it at construction |
+| Blocking I/O (`requests`, `time.sleep`, sync SDK) inside a tool on the voice path | Stalls the event loop; use the async client |
 | Approve-everything rule with third-party skills | `run_skill_script` executes code |
 | `SkillsProvider` pointed at `.github/skills/` | Build-time skills shipped to runtime |

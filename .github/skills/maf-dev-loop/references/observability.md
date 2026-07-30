@@ -71,10 +71,14 @@ collector or cloud monitoring resource.
 
 | Symptom | Cause |
 |---|---|
-| No spans at all | `ENABLE_INSTRUMENTATION` not `true`, or setup ran after client construction |
+| No spans at all | No provider/exporter configured — call `configure_otel_providers(...)` or launch DevUI with its tracing flag. Instrumentation itself is on by default |
+| No spans after calling `disable_instrumentation()` | The disable is sticky; re-enable with `enable_instrumentation(force=True)` |
 | Every span duplicated | more than one configuration pattern applied |
 | Every span duplicated N times under DevUI | a telemetry initializer runs at entity import |
 | Agent spans present, voice spans missing | `AZURE_EXPERIMENTAL_ENABLE_GENAI_TRACING` not set before `instrument()` |
 | Voice and agent spans in separate traces | new root span created per turn in the tool bridge |
 | Prompts missing from spans | `ENABLE_SENSITIVE_DATA` off (expected in production) |
 | Export attempt fails | a cloud or remote exporter was configured outside this seed's contract |
+
+If there are no spans *and* no log lines, this is not a telemetry problem — start at
+[diagnostics.md](diagnostics.md).

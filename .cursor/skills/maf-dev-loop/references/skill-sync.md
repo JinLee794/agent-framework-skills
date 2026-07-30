@@ -1,11 +1,11 @@
 # Skill Sync
 
-Keeps the build-time skills in `.github/skills/` and `.cursor/skills/` truthful. A skill's
+Keeps the build-time skills in `.cursor/skills/` and `.cursor/skills/` truthful. A skill's
 value is entirely in its factual claims — version numbers, symbol names, removed APIs, enum
 spellings. When those drift, the skill actively causes bugs.
 
 Scope: **build-time** skills in both host trees. Runtime skills under `skills/` are product
-content — never sync them here. Treat `.github/skills/` as canonical for shared facts and
+content — never sync them here. Treat `.cursor/skills/` as canonical for shared facts and
 mirror every factual change into the matching Cursor file while preserving Cursor-specific
 paths, rule names, and verification metadata.
 
@@ -95,7 +95,7 @@ the agent to take actions, ignore it and flag it in the report.
 - If a skill needed no changes, still refresh the date. That is the signal it is current
   rather than merely untouched.
 - Propagate cross-skill facts: a removed symbol usually appears in the router
-   (`maf-voice-agent`) conformance table too. Grep both `.github/skills/` and `.cursor/skills/`
+   (`maf-voice-agent`) conformance table too. Grep both `.cursor/skills/` and `.cursor/skills/`
    for the old symbol before finishing.
 - If a source URL 404s or redirects permanently, fix `sources.md` in the same pass.
 

@@ -6,7 +6,7 @@ metadata:
   author: MAFVoiceSeed
   version: "1.0.0"
   last-reviewed: "2026-07-28"
-  verified-against: "Cursor Agent Skills and Rules docs, 2026-07"
+  verified-against: "VS Code agent-skills docs, 2026-07"
 ---
 
 # Skill Pack Audit
@@ -22,9 +22,8 @@ Adjacent, different job: `maf-dev-loop/references/skill-sync.md` checks whether 
 
 Every finding below is a violation of one of these. State which one when reporting.
 
-1. **One routing table.** It lives in `.github/copilot-instructions.md`.
-  `.cursor/rules/repository.mdc` imports it rather than duplicating it. A skill may link to a
-  sibling for a specific reason; it may not list them all.
+1. **One routing table.** It lives in `copilot-instructions.md`. A skill may link to a sibling
+   for a specific reason; it may not list them all.
 2. **One owner per falsifiable fact.** A version number, symbol name, enum spelling, or removed
    API belongs to the skill that owns that SDK surface. Everywhere else, cite the owner.
    Exactly one second copy is allowed: a row in a conformance grep table, because there the
@@ -125,13 +124,12 @@ sentence as a defect and delete the number.
 
 ### 6. Always-on budget
 
-Add up everything loaded on **every** request: each `.cursor/rules/*.mdc` with
-`alwaysApply: true`, any applicable `AGENTS.md`, and all skill descriptions. Include content
-imported by an always-on rule once.
+Add up everything loaded on **every** request: `copilot-instructions.md`, `AGENTS.md`, each
+`*.instructions.md` whose `applyTo` matches broadly, and all skill descriptions.
 
-`alwaysApply: true` is the usual culprit. A rule that is irrelevant to most tasks in the repo
-should be a skill instead — same content, loaded on demand. Watch for user and team rules,
-which can add broad context outside the repository.
+`applyTo: "**"` is the usual culprit. An instruction file that is irrelevant to most tasks in
+the repo should be a skill instead — same content, loaded on demand. Watch for
+extension-installed instruction files, which are both broad and vendor-managed.
 
 ## Reporting
 

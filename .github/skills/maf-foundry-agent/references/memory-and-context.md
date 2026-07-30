@@ -24,8 +24,9 @@ Keep runtime state in `AgentSession`; use file history only for local developmen
 
 For the transcript:
 
-- `FileHistoryProvider(storage_directory, dumps=orjson.dumps)` — JSONL on disk; good for
-  local development and replayable test fixtures.
+- `FileHistoryProvider(storage_path, dumps=orjson.dumps)` — JSONL on disk; good for
+  local development and replayable test fixtures. The first parameter is `storage_path`
+  (`str | Path`), not `storage_directory`.
 - `InMemoryHistoryProvider()` — tests.
 
 Use `default_options={"store": False}` because there is no project-backed service history.
@@ -39,14 +40,21 @@ from agent_framework import AgentSession, ContextProvider, SessionContext
 
 
 class CallerContext(ContextProvider):
-    DEFAULT_SOURCE_ID = "caller_context"
+    def __init__(self, crm: CrmClient, *, caller_id: str) -> None:
+        super().__init__("caller_context")  # source_id is a required positional argument
+        self._crm = crm
+        self._caller_id = caller_id  # from the authenticated session, never the transcript
 
     async def before_run(
         self, *, agent: Any, session: AgentSession, context: SessionContext, state: dict[str, Any]
     ) -> None:
         if "profile" not in state:
-            state["profile"] = await self._crm.lookup(context.session_id)
-        context.instructions = f"Caller: {state['profile']['name']}, tier {state['profile']['tier']}."
+            state["profile"] = await self._crm.lookup(self._caller_id)
+        profile = state["profile"]
+        context.extend_instructions(
+            self.source_id,
+            f"Caller: {profile['name']}, tier {profile['tier']}.",
+        )
 
     async def after_run(
         self, *, agent: Any, session: AgentSession, context: SessionContext, state: dict[str, Any]
@@ -54,19 +62,28 @@ class CallerContext(ContextProvider):
         await self._crm.record_interaction(state["profile"]["id"], context)
 ```
 
-- `source_id` must be unique per provider; state is keyed by it in `session.state`.
+- `ContextProvider.__init__` takes `source_id` as a **required positional argument**. A
+  subclass that forgets `super().__init__(...)` fails at construction; there is no
+  `DEFAULT_SOURCE_ID` class attribute to fall back on.
+- `SessionContext.instructions` is a `list[str]`. Assigning a string to it is a type error that
+  also silently discards every other provider's contribution — call
+  `context.extend_instructions(self.source_id, ...)`. Use `context.extend_messages(...)` for
+  anything untrusted, such as retrieved documents, so it never gains system authority.
+- `source_id` must be unique per provider; state is keyed by it.
 - Keep `before_run` fast. It is on the critical path of every turn — in a voice agent that is
   dead air on the line.
 - `after_run` is the right place for slow writes — fire-and-forget or batch them.
 - Providers compose: pass several in `context_providers=[...]`; they run in order.
-- Context injected from another session is attributed via
-  `Message.additional_properties["_attribution"]["origin_session_ids"]`.
+- Context injected from another session is attributed through
+  `Message.additional_properties`; check the attribution payload on your installed version
+  before relying on its exact shape.
 
 ## Harness file memory
 
-`FileMemoryProvider` gives the agent `file_memory_write`, `file_memory_read`, and
-`file_memory_grep` over an `AgentFileStore`. It is for agent-authored working notes, not user
-facts. Keep its working folder local and out of production secrets.
+`FileMemoryProvider` gives the agent file tools over an `AgentFileStore` — `file_memory_read`,
+`file_memory_ls`, `file_memory_grep`, plus write, replace, and delete variants. It is
+experimental, and it is for agent-authored working notes, not user facts. Keep its working
+folder local and out of production secrets.
 
 ## Voice-specific guidance
 
@@ -80,5 +97,8 @@ facts. Keep its working folder local and out of production secrets.
 |---|---|
 | Session shared across callers | Cross-conversation data leak |
 | Slow I/O in `before_run` | Dead air on every turn |
+| `context.instructions = "..."` | It is a `list[str]`; use `extend_instructions(source_id, ...)` |
+| `ContextProvider` subclass without `super().__init__(source_id)` | `source_id` is required and positional |
+| Identity or authorization field populated from the transcript | The caller is untrusted input |
 | Cloud memory or persistence provider | Adds a forbidden resource; use session state or local test history |
 | Document corpus in session state | Use the existing Azure AI Search service |

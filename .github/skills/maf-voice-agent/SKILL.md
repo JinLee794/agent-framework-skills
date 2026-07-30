@@ -58,13 +58,20 @@ Full annotations in [references/repo-layout.md](references/repo-layout.md).
 
 ```text
 <repo>/
-  config/                    # THE behaviour contract — agents, voice profiles, overlays, schemas
+  config/
+    agents/                  # kind: Prompt documents — stock MAF AgentFactory schema
+    workflows/               # kind: Workflow documents — reference agent files by path
+    voice/                   # seed-owned VoiceLive session documents; mount an agent/workflow
+    profiles/                # environment overlays
+    schemas/voice.schema.json
   src/<package>/
-    config/                  # loader: models, extends merge, registry, builders
-    agents/                  # thin; builds from AgentConfig — no literal instructions
-    tools/                   # @tool functions, grouped by domain; no agent imports
+    config/                  # loader: voice models, overlay merge, bindings registry, builders
+    agents/                  # thin factories — no literal instructions
+    tools/                   # tool functions, grouped by domain; no agent imports
+    workflows/               # only once a second agent exists
     voice/                   # VoiceLive event loop and audio I/O — no literal session config
     retrieval/               # RAG: Azure AI Search context providers and tools
+    diagnostics.py           # logging setup + preflight; called once at the entry point
     settings.py              # typed env resolution, one place only
   skills/                    # runtime Agent Skills served via SkillsProvider
   entities/                  # DevUI discovery roots; each exports `agent` or `workflow`
@@ -76,6 +83,12 @@ Full annotations in [references/repo-layout.md](references/repo-layout.md).
 `config/` holds behaviour, env holds deployment values, `src/` holds code. A value in the
 wrong one of those three is the most common config defect.
 
+Behaviour documents are **MAF's own schema**, not a private dialect: agent documents are
+`kind: Prompt` loaded by `AgentFactory`, workflow documents are `kind: Workflow` loaded by
+`WorkflowFactory`. Only the voice document is seed-owned, because VoiceLive session shape has
+no declarative equivalent. Details and the rejected layout alternatives:
+[maf-agent-config](../maf-agent-config/SKILL.md).
+
 Two skill trees, deliberately: `skills/` is **runtime** (loaded by `SkillsProvider`);
 `.github/skills/` is **build-time** (loaded by the coding agent). Never ship the latter.
 
@@ -84,6 +97,12 @@ Two skill trees, deliberately: `skills/` is **runtime** (loaded by `SkillsProvid
 - `tools/` must not import from `agents/`. Tools are pure, testable, and reusable.
 - `voice/` must not contain business logic. It translates audio events to agent invocations.
 - `settings.py` exposes only the Foundry and Azure AI Search values in `.env.example`.
+- `diagnostics.py` imports nothing from the rest of the package, so it can be set up before
+  anything that might fail.
+
+Once a second agent appears, the `workflows/` tree, participant configs, and the import
+direction between them are owned by
+[maf-multi-agent-workflows](../maf-multi-agent-workflows/SKILL.md).
 
 ## Environment contract
 
@@ -104,20 +123,31 @@ AZURE_SEARCH_API_VERSION=2026-04-01
 # AZURE_VOICELIVE_ENDPOINT=https://<other-foundry-resource>.services.ai.azure.com
 # AZURE_VOICELIVE_API_KEY=<other-resource-key>
 # AZURE_VOICELIVE_MODEL=<other-model-or-deployment-name>
-# AZURE_VOICELIVE_PROFILE=byom-azure-openai-chat-completion
+
+# Unset for a Voice Live-managed model; a byom-* profile reaches a deployment you own.
+AZURE_VOICELIVE_PROFILE=byom-azure-openai-chat-completion
 ```
 
 ## Scaffolding checklist
 
-1. Write `config/agents/<name>.agent.yaml` first, then `config/voice/<name>.voice.yaml` with
-  `topology: maf_bridge` and an interim response.
-2. Add `settings.py` entries for any new env var and mirror them in `.env.example`. Behaviour
+1. Write `config/agents/<name>.yaml` as a `kind: Prompt` document — stock MAF schema, camelCase
+   keys, domain policy in `instructions`.
+2. Write `config/voice/<name>.yaml` with `topology: maf_bridge`, `mounts.agent: <name>`,
+   bridge-only `session.instructions`, and an `interim_response`.
+3. Create each tool in `tools/` with tests, then register it in the bindings mapping under the
+   exact name the agent document binds.
+4. Add `settings.py` entries for any new env var and mirror them in `.env.example`. Behaviour
    values go in YAML, never in `.env`.
-3. Create each `ref` tool in `tools/` with tests, then register it.
-4. Construct project chat with Entra; derive VoiceLive from Foundry settings unless explicitly overridden.
-5. Add a DevUI entity that loads the same YAML — no copy-pasted config.
-6. Reject dependencies or settings for any Azure resource beyond Foundry and Azure AI Search.
-7. Run the conformance review.
+5. Wire `diagnostics.setup_logging()` as the **first** call at every entry point — voice loop,
+   DevUI entity, and CLI. A seed that cannot explain its own failure is not shippable.
+   → [maf-dev-loop](../maf-dev-loop/SKILL.md)
+6. Construct project chat with Entra; derive VoiceLive from Foundry settings unless explicitly
+   overridden.
+7. Add a DevUI entity that loads the same agent document — no copied config.
+8. Run the preflight check (`python -m <package> --check`) before the first call. It must fail
+   loudly on unset env, unreachable endpoint, unbound tools, or a mismounted agent.
+9. Reject dependencies or settings for any Azure resource beyond Foundry and Azure AI Search.
+10. Run the conformance review.
 
 ## GA-conformance review
 

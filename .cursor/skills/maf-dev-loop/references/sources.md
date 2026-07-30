@@ -61,7 +61,7 @@ Watch for: `FoundryChatClient` project endpoint and token credential fields, ses
 `@tool` signature and `approval_mode` values, `SKILL.md` frontmatter, `SkillsProvider` API,
 `ContextProvider` hooks, Search API versions, and citation shape.
 
-## foundry-iq
+## ai-search
 
 Covers the SKILL body, `references/setup.md`, `references/indexing-pipeline.md`,
 `references/live-checks.md`, and `scripts/check_search.py`.
@@ -101,7 +101,7 @@ cadence, against different ground truth:
 - `mermaid-diagrams` — the Mermaid Chart extension listing:
   https://marketplace.visualstudio.com/items?itemName=MermaidChart.vscode-mermaid-chart
   Watch for: LM tool names, command IDs, slash-command names, and whether the extension has
-  resumed writing `.github/instructions/mermaid.instructions.md`.
+  resumed writing `.cursor/instructions/mermaid.instructions.md`.
 - `skill-pack-audit` — VS Code custom-instructions and skills docs:
   https://code.visualstudio.com/docs/copilot/customization/custom-instructions
   Watch for: `SKILL.md` frontmatter fields, discovery paths, and how much of a skill the agent

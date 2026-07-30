@@ -45,11 +45,15 @@ endpoint or key override.
 |---|---|
 | `AZURE_VOICELIVE_ENDPOINT` | VoiceLive is on another Foundry resource |
 | `AZURE_VOICELIVE_API_KEY` | That resource has a different key |
-| `AZURE_VOICELIVE_MODEL` | The VoiceLive deployment name differs from `FOUNDRY_MODEL` |
-| `AZURE_VOICELIVE_PROFILE` | BYOM is selected; set the matching `byom-*` profile |
+| `AZURE_VOICELIVE_MODEL` | The VoiceLive model or deployment name differs from `FOUNDRY_MODEL` |
+| `AZURE_VOICELIVE_PROFILE` | BYOM is selected; set the matching `byom-*` profile. Unset selects a Voice Live-managed model |
 
 Endpoint and key overrides must be set together. Mismatching an endpoint and key produces an
 avoidable `401`. Model and profile can be overridden independently.
+
+`AZURE_VOICELIVE_PROFILE` is the switch between the two VoiceLive model sources, so confirm it
+with the user rather than inferring it from the model name — see
+[voicelive-realtime](../../voicelive-realtime/SKILL.md).
 
 ## Azure AI Search resource
 
@@ -81,7 +85,10 @@ FOUNDRY_EMBEDDING_MODEL=text-embedding-3-small
 # AZURE_VOICELIVE_ENDPOINT=https://<other-foundry-resource>.services.ai.azure.com
 # AZURE_VOICELIVE_API_KEY=
 # AZURE_VOICELIVE_MODEL=
-# AZURE_VOICELIVE_PROFILE=byom-azure-openai-chat-completion
+
+# VoiceLive model source: unset for a Voice Live-managed model, or a byom-* profile to reach
+# a deployment you own. FOUNDRY_MODEL above is not pre-deployed by Voice Live.
+AZURE_VOICELIVE_PROFILE=byom-azure-openai-chat-completion
 
 # Azure AI Search resource
 AZURE_SEARCH_ENDPOINT=https://<search-service>.search.windows.net

@@ -1,6 +1,6 @@
 ---
 name: maf-foundry-agent
-description: "Building the local MAF reasoning agent against a Microsoft Foundry project endpoint: agent factories, function tools, skills, sessions, middleware, and Azure AI Search retrieval. Load for work under src/agents, src/tools, or src/retrieval. NOT for chunking, embedding, populating, or inspecting a Search index - load foundry-iq for that."
+description: "Building the local MAF reasoning agent against a Microsoft Foundry project endpoint: agent factories, function tools, skills, sessions, middleware, and Azure AI Search retrieval. Load for work under src/agents, src/tools, or src/retrieval. NOT for chunking, embedding, populating, or inspecting a Search index - load ai-search for that."
 license: MIT
 compatibility: Python 3.10+; agent-framework + agent-framework-foundry; Microsoft Foundry project endpoint; azure-identity.
 metadata:
@@ -21,60 +21,109 @@ Depth lives in references. Load one only when the task needs it.
 | Ground the agent in Azure AI Search | [references/retrieval.md](references/retrieval.md) |
 
 Creating, populating, and validating the Azure AI Search index is owned by the separate
-`foundry-iq` skill.
+`ai-search` skill.
 
 ## Install
 
 ```bash
-python -m pip install agent-framework agent-framework-foundry azure-identity
+python -m pip install agent-framework agent-framework-foundry agent-framework-declarative azure-identity
 ```
 
-Use the Foundry client against the existing project endpoint:
+## Choose the chat client by credential
+
+Pick the client from the credential you actually hold. Getting this wrong surfaces as a `403`
+on the *first model call*, long after startup looked healthy.
+
+| You have | Client | Endpoint |
+|---|---|---|
+| Entra token **and** `Foundry User` on the resource | `FoundryChatClient` | project endpoint |
+| Resource API key only | `OpenAIChatClient` | `<resource>/openai/v1/` |
+
+`FoundryChatClient` takes `credential: TokenCredential | AsyncTokenCredential` — it has no
+`api_key` parameter, so a key cannot be substituted. It also calls `agents/write` on the
+project, which `Owner` does **not** grant because that is a data action, not a control action.
 
 ```python
+# Entra: project endpoint
 from agent_framework.foundry import FoundryChatClient
+
+client = FoundryChatClient(
+    project_endpoint=settings.foundry_project_endpoint,
+    model=config.model.deployment,
+    credential=credential,
+)
 ```
 
-`FoundryChatClient` requires a token credential for the project endpoint. Use
-`AzureCliCredential` locally and inject a deliberate token credential in deployment. The local
-MAF `Agent` still owns instructions, tools, sessions, and middleware.
+```python
+# API key only: resource endpoint
+from agent_framework.openai import OpenAIChatClient
+
+client = OpenAIChatClient(
+    config.model.deployment,
+    api_key=settings.foundry_api_key,
+    base_url=settings.foundry_openai_base_url,  # <resource>/openai/v1/
+)
+```
+
+The key path must use a `base_url` ending in `/openai/v1/`. Agent Framework calls the Responses
+API, and pairing `azure_endpoint=` with a dated `api_version` fails with
+`400 API version not supported`. Derive the resource endpoint by stripping `/api/projects/...`
+from the project endpoint. Credentials accepted by the VoiceLive websocket are owned by
+[voicelive-realtime](../voicelive-realtime/SKILL.md).
+
+Annotate factories and builders as `BaseChatClient` so either client mounts unchanged.
 
 ## Baseline agent
 
-Instructions, model, and the tool list come from `config/agents/<name>.agent.yaml` — see
-[maf-agent-config](../maf-agent-config/SKILL.md). The code below is what the config builder
-produces. Do not write literal instructions or tool lists into `src/`.
+Instructions, model, and the tool list come from `config/agents/<name>.yaml`, a MAF-native
+`kind: Prompt` document — see [maf-agent-config](../maf-agent-config/SKILL.md). Do not write
+literal instructions or tool lists into `src/`, and do not hand-roll a parser for that
+document: `AgentFactory` already does it.
 
 ```python
 import os
 
 from agent_framework import Agent
-from agent_framework.foundry import FoundryChatClient
+from agent_framework.declarative import AgentFactory
 from azure.identity.aio import AzureCliCredential
 from dotenv import load_dotenv
 
 load_dotenv()  # Agent Framework never does this for you
 
 
-def build_concierge_agent(client: FoundryChatClient, **deps) -> Agent:
-    return Agent(client=client, name="concierge", instructions=..., tools=[...])
+def build_concierge_agent(factory: AgentFactory, path, **deps) -> Agent:
+    agent = factory.create_agent_from_yaml_path(path)
+    agent.context_providers.extend(deps.get("context_providers", []))
+    return agent
 
 
 async def main() -> None:
-  async with AzureCliCredential() as credential:
-    client = FoundryChatClient(
-      project_endpoint=os.environ["FOUNDRY_PROJECT_ENDPOINT"],
-      model=os.environ["FOUNDRY_MODEL"],
-      credential=credential,
-    )
-    agent = build_concierge_agent(client)
-    session = agent.create_session()
-    print(await agent.run("Do I have a booking under ABC123?", session=session))
+    async with AzureCliCredential() as credential:
+        factory = AgentFactory(
+            client_kwargs={
+                "credential": credential,
+                "project_endpoint": os.environ["FOUNDRY_PROJECT_ENDPOINT"],
+            },
+            bindings=TOOL_BINDINGS,
+            safe_mode=False,
+        )
+        agent = build_concierge_agent(factory, "config/agents/concierge.yaml")
+        session = agent.create_session()
+        print(await agent.run("Do I have a booking under ABC123?", session=session))
 ```
 
-Always export a `build_<name>_agent(client, **deps) -> Agent` factory. It is what lets the
-voice loop, DevUI, and tests mount the *same* agent. Module-level construction breaks DevUI
-reload and forces network access at import time.
+Always export a `build_<name>_agent(...) -> Agent` factory. It is what lets the voice loop,
+DevUI, and tests mount the *same* agent. Module-level construction breaks DevUI reload and
+forces network access at import time.
+
+`AgentFactory` returns a plain `Agent`. Retrieval providers, middleware, and approval wrapping
+are attached by the factory function afterwards — `agent.context_providers` and
+`agent.middleware` are public mutable lists. `create_agent_from_yaml_path` is sync;
+`create_agent_from_yaml_path_async` exists for async call sites and is preferred inside the
+voice loop's setup.
+
+A declared `function` tool whose binding name is missing from `bindings` is constructed with
+`func=None` and fails silently at call time. Assert the mapping is total when you build.
 
 ## Supported capabilities
 
@@ -139,8 +188,10 @@ researcher_tool = researcher.as_tool(
 coordinator = Agent(client=client, instructions="Delegate research.", tools=[researcher_tool])
 ```
 
-Prefer this over hand-rolled orchestration for simple delegation. Reach for Workflows only
-when you need graph structure, checkpointing, or human-in-the-loop gates.
+Prefer this over hand-rolled orchestration for simple delegation. Anything beyond one
+delegated call — a second participant, an orchestration pattern, graph structure,
+checkpointing, or human-in-the-loop gates — is
+[maf-multi-agent-workflows](../maf-multi-agent-workflows/SKILL.md).
 
 ## Credential handling
 
@@ -152,6 +203,8 @@ identity from a request or transcript. Keep `.env` gitignored.
 
 | Pattern | Verdict |
 |---|---|
+| A hand-rolled parser for `config/agents/*.yaml` | `AgentFactory` already loads that schema |
+| A `function` tool declared in YAML with no entry in `bindings` | Built with `func=None`; the model calls a no-op |
 | API key passed to `FoundryChatClient` / `AIProjectClient` | Project clients require a token credential |
 | Agent constructed at module scope | Breaks DevUI reload; network at import |
 | Missing `load_dotenv()` | Agent Framework does not load `.env` |

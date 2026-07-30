@@ -143,8 +143,8 @@ configured for reduced dimensions, and the live response is authoritative.
 Run the bundled read-only check first:
 
 ```powershell
-python .github/skills/foundry-iq/scripts/check_search.py
-python .github/skills/foundry-iq/scripts/check_search.py --query "a corpus-specific question"
+python .cursor/skills/ai-search/scripts/check_search.py
+python .cursor/skills/ai-search/scripts/check_search.py --query "a corpus-specific question"
 ```
 
 It validates `.env`, probes embeddings, reads the live index definition and statistics,

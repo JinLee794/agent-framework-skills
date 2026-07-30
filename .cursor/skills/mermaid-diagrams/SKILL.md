@@ -77,7 +77,7 @@ Accept / reject / diff stay in the extension UI.
 
 ## Caveat
 
-The Mermaid extension may reinstall `.github/instructions/mermaid.instructions.md` with
+The Mermaid extension may reinstall `.cursor/instructions/mermaid.instructions.md` with
 `applyTo: "**"`, which loads this content into *every* request in the repo. If that file
 reappears, delete it — this skill replaces it, and the skill is loaded on demand instead.
 

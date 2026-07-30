@@ -10,7 +10,7 @@ that "remember" documents and "retrieve" user facts, and both degrade.
 |---|---|---|
 | **`AzureAISearchContextProvider`, `mode="semantic"`** | your process, before each run | Ground every turn in the configured Azure AI Search index |
 
-Index creation, chunking, embedding, upload, and live checks belong to the `foundry-iq` skill.
+Index creation, chunking, embedding, upload, and live checks belong to the `ai-search` skill.
 This file covers only how MAF consumes that finished index.
 
 The context provider retrieves before every run. If retrieval should be on demand, wrap a

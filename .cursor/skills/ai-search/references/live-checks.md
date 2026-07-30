@@ -10,8 +10,8 @@ Live checks answer four different questions in order:
 Use the bundled checker after completing [setup.md](setup.md):
 
 ```powershell
-python .github/skills/foundry-iq/scripts/check_search.py
-python .github/skills/foundry-iq/scripts/check_search.py --query "a corpus-specific question"
+python .cursor/skills/ai-search/scripts/check_search.py
+python .cursor/skills/ai-search/scripts/check_search.py --query "a corpus-specific question"
 ```
 
 This workflow never creates, updates, uploads, or deletes. It reports field metadata, index
