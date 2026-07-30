@@ -22,7 +22,7 @@ Adjacent, different job: `maf-dev-loop/references/skill-sync.md` checks whether 
 
 Every finding below is a violation of one of these. State which one when reporting.
 
-1. **One routing table.** It lives in `copilot-instructions.md`. A skill may link to a sibling
+1. **One routing table.** It lives in `rules/repository.mdc.md`. A skill may link to a sibling
    for a specific reason; it may not list them all.
 2. **One owner per falsifiable fact.** A version number, symbol name, enum spelling, or removed
    API belongs to the skill that owns that SDK surface. Everywhere else, cite the owner.
@@ -124,7 +124,7 @@ sentence as a defect and delete the number.
 
 ### 6. Always-on budget
 
-Add up everything loaded on **every** request: `copilot-instructions.md`, `AGENTS.md`, each
+Add up everything loaded on **every** request: `rules/repository.mdc.md`, `AGENTS.md`, each
 `*.instructions.md` whose `applyTo` matches broadly, and all skill descriptions.
 
 `applyTo: "**"` is the usual culprit. An instruction file that is irrelevant to most tasks in

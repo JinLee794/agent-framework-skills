@@ -17,7 +17,7 @@ API surfaces, config contracts, and GA requirements.
 gh repo create <your-org>/<your-repo> --template JinLee794/agent-framework-skills --private --clone
 ```
 
-You get `.cursor/skills/` and `.cursor/copilot-instructions.md` ready to go. Add your `src/`,
+You get `.cursor/skills/` and `.cursor/rules/repository.mdc.md` ready to go. Add your `src/`,
 `config/`, and `tests/` on top — `maf-voice-agent/references/repo-layout.md` describes the
 layout the skills assume.
 
@@ -30,16 +30,16 @@ Copy-Item agent-framework-skills\.cursor\skills\* .cursor\skills\ -Recurse
 ```
 
 In VS Code, skills under `.cursor/skills/` are discovered automatically.
-`.cursor/copilot-instructions.md` is the single routing surface — it maps tasks to skills and
+`.cursor/rules/repository.mdc.md` is the single routing surface — it maps tasks to skills and
 carries the house rules that apply everywhere. Copy it too, or merge its routing table into
 your existing instructions file.
 
 ### After you generate
 
-1. **Set the routing table.** `.cursor/copilot-instructions.md` lists every skill in the pack.
+1. **Set the routing table.** `.cursor/repository.mdc` lists every skill in the pack.
    Delete rows for skills you removed; add rows for skills you add. No skill restates it.
 2. **Rewrite `metadata.author`** in each `SKILL.md` frontmatter — it ships as `MAFVoiceSeed`.
-3. **Re-check the house rules.** Rules 1–7 in `copilot-instructions.md` encode opinions about
+3. **Re-check the house rules.** Rules 1–7 in `rules/repository.mdc.md` encode opinions about
    declarative config, untrusted callers, and credential handling. Keep the ones that fit your
    project; delete the ones that do not rather than leaving a rule your code violates.
 4. **Wire up an MCP server or two** — see [MCP servers that help](#mcp-servers-that-help).
@@ -65,7 +65,7 @@ only when a task actually needs that depth.
 
 ```text
 .cursor/
-├─ copilot-instructions.md          # routing table + house rules (always on)
+├─ rules/repository.mdc.md          # routing table + house rules (always on)
 └─ skills/
    ├─ maf-voice-agent/              # SKILL.md + conformance, env-contract, repo-layout
    ├─ maf-agent-config/             # SKILL.md + agent-yaml, voice-yaml

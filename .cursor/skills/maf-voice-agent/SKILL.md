@@ -12,9 +12,9 @@ metadata:
 
 # Voice Agent — Structure & Topology
 
-The repo-wide house rules are in `.cursor/copilot-instructions.md` and always apply. This skill
+The repo-wide house rules are in `.cursor/rules/repository.mdc.md` and always apply. This skill
 owns three things no other skill does: **which topology**, **where files go**, and **the
-conformance checklist**. Routing to sibling skills is in `copilot-instructions.md`.
+conformance checklist**. Routing to sibling skills is in `rules/repository.mdc.md`.
 
 ## Fixed integration topology
 

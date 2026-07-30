@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Repository Instructions
 
-Apply @.cursor/copilot-instructions.md as the canonical repository instructions for every
+Apply @.cursor/rules/repository.mdc.md as the canonical repository instructions for every
 Cursor Agent chat.
 
 When those instructions refer to build-time coding-agent skills under `.cursor/skills/`, use
